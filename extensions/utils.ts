@@ -3,6 +3,7 @@ import { visibleWidth } from '@mariozechner/pi-tui';
 export { visibleWidth };
 
 export const GOLD_FG = '\x1b[38;2;212;162;46m';
+export const BLUE_FG = '\x1b[38;2;86;156;214m';
 export const GREEN_FG = '\x1b[38;2;96;176;88m';
 export const GREEN_DARK_FG = '\x1b[38;2;62;124;66m';
 export const RESET_FG = '\x1b[39m';
@@ -13,6 +14,10 @@ export function tint(text: string, color: string): string {
 
 export function gold(text: string): string {
   return tint(text, GOLD_FG);
+}
+
+export function blue(text: string): string {
+  return tint(text, BLUE_FG);
 }
 
 export function padVisible(text: string, width: number): string {

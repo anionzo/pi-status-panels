@@ -1,4 +1,4 @@
-import { gold, padVisible, tint, visibleWidth } from './utils';
+import { blue, padVisible, tint, visibleWidth } from './utils';
 
 export type BuiltPanel = {
   lines: string[];
@@ -57,17 +57,17 @@ export function framePanelBody({
   const fill = Math.max(1, inner - leftHeader.length - rightSegment.length);
 
   const top =
-    gold('╭') +
-    gold(leftHeader) +
-    gold('─'.repeat(fill)) +
-    (rightSegment ? gold(rightSegment) : '') +
-    gold('╮');
+    blue('╭') +
+    blue(leftHeader) +
+    blue('─'.repeat(fill)) +
+    (rightSegment ? blue(rightSegment) : '') +
+    blue('╮');
 
-  const bottom = gold('╰') + gold('─'.repeat(inner)) + gold('╯');
+  const bottom = blue('╰') + blue('─'.repeat(inner)) + blue('╯');
   const contentWidth = passedContentWidth ?? Math.max(8, inner - 2);
 
   const framedBody = bodyLines.map(
-    (line) => gold('│ ') + padVisible(line, contentWidth) + gold(' │'),
+    (line) => blue('│ ') + padVisible(line, contentWidth) + blue(' │'),
   );
   const lines = [top, ...framedBody, bottom];
   return { lines, width: visibleWidth(top) };

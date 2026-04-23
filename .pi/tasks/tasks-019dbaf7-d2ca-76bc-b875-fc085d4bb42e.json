@@ -1,0 +1,60 @@
+{
+  "nextId": 6,
+  "tasks": [
+    {
+      "id": "1",
+      "subject": "Read @aliou/pi-guardrails source",
+      "description": "Read package.json and src folder",
+      "status": "completed",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1776958359048,
+      "updatedAt": 1776958402380
+    },
+    {
+      "id": "2",
+      "subject": "Read @sinamtz/pi-minimax-provider source",
+      "description": "Read package.json and dist folder",
+      "status": "in_progress",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1776958359051,
+      "updatedAt": 1776958402383
+    },
+    {
+      "id": "3",
+      "subject": "Read @sting8k/pi-vcc source",
+      "description": "Read package.json and main source",
+      "status": "pending",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1776958359054,
+      "updatedAt": 1776958359054
+    },
+    {
+      "id": "4",
+      "subject": "Read @tintinweb/pi-subagents source",
+      "description": "Read package.json and src folder",
+      "status": "pending",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1776958359057,
+      "updatedAt": 1776958359057
+    },
+    {
+      "id": "5",
+      "subject": "Read @tintinweb/pi-tasks source",
+      "description": "Read package.json and src folder",
+      "status": "pending",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1776958359059,
+      "updatedAt": 1776958359059
+    }
+  ]
+}
