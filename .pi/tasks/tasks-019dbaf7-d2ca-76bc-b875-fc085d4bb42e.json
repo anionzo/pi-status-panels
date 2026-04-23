@@ -16,45 +16,45 @@
       "id": "2",
       "subject": "Read @sinamtz/pi-minimax-provider source",
       "description": "Read package.json and dist folder",
-      "status": "in_progress",
+      "status": "completed",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1776958359051,
-      "updatedAt": 1776958402383
+      "updatedAt": 1776958428354
     },
     {
       "id": "3",
       "subject": "Read @sting8k/pi-vcc source",
       "description": "Read package.json and main source",
-      "status": "pending",
+      "status": "completed",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1776958359054,
-      "updatedAt": 1776958359054
+      "updatedAt": 1776958471119
     },
     {
       "id": "4",
       "subject": "Read @tintinweb/pi-subagents source",
       "description": "Read package.json and src folder",
-      "status": "pending",
+      "status": "completed",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1776958359057,
-      "updatedAt": 1776958359057
+      "updatedAt": 1776958495768
     },
     {
       "id": "5",
       "subject": "Read @tintinweb/pi-tasks source",
       "description": "Read package.json and src folder",
-      "status": "pending",
+      "status": "completed",
       "metadata": {},
       "blocks": [],
       "blockedBy": [],
       "createdAt": 1776958359059,
-      "updatedAt": 1776958359059
+      "updatedAt": 1776958518556
     }
   ]
 }

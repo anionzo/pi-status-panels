@@ -1,6 +1,6 @@
 {
   "name": "@anionzo/pi-status-panels",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Responsive status panels for pi - git info, LLM context usage, and Spotify now-playing below the editor",
   "keywords": [
     "pi-package"

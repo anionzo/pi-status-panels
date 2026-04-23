@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+- **INFO panel**: token I/O breakdown (↓input ↑output), cache read/write stats, session cost
+- **Settings**: customizable border color (blue, gold, green, cyan, magenta, red, white)
+- Border rendering refactored to use dynamic `border()` function
+
 ## 0.2.0
 
 - Added **Session** panel (elapsed time, start time, turn count)

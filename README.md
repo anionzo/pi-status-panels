@@ -7,7 +7,7 @@ Responsive status panels rendered below the editor in [pi](https://pi.dev).
 ## Panels
 
 - **GIT** — worktree name, branch, upstream tracking, ahead/behind counts
-- **INFO** — LLM context usage bar (color-coded), token count, active model and thinking level
+- **INFO** — context usage bar, token I/O breakdown (↓input ↑output), cache stats, cost, model & thinking level
 - **SESSION** — elapsed time, session start time, turn count
 
 Panels auto-size to their content, render side-by-side when terminal width allows, and fall back to a stacked layout on narrow terminals.
@@ -18,12 +18,26 @@ Panels auto-size to their content, render side-by-side when terminal width allow
 pi install npm:@anionzo/pi-status-panels
 ```
 
+Or install from local path:
+
+```bash
+pi install /path/to/pi-status-panels
+```
+
 ## Commands
 
 | Command                  | Description                                           |
 | ------------------------ | ----------------------------------------------------- |
-| `/status-panels`         | Open the settings overlay to toggle individual panels |
+| `/status-panels`         | Open the settings overlay to toggle panels and colors |
 | `/status-panels on\|off` | Enable or disable all panels                          |
+
+## Settings
+
+The settings overlay lets you:
+- Toggle individual panels on/off
+- Choose border color: **blue**, **gold**, **green**, **cyan**, **magenta**, **red**, **white**
+
+Preferences are saved at `~/.pi/agent/state/extensions/status-panels/config.json`.
 
 ## Customization
 

@@ -21,6 +21,11 @@ export type InfoSnapshot = {
   tokens: number | null;
   contextWindow: number;
   modelText: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheRead: number;
+  cacheWrite: number;
+  totalCost: number;
 };
 
 type InfoRow = {
@@ -48,9 +53,25 @@ function renderBar(percent: number | null, valueWidth: number): string {
   return deficit > 0 ? `${composed}${' '.repeat(deficit)}` : composed;
 }
 
+function formatCost(cost: number): string {
+  if (cost === 0) return '$0.00';
+  if (cost < 0.01) return `$${cost.toFixed(4)}`;
+  return `$${cost.toFixed(2)}`;
+}
+
 export function buildInfoPanel(snapshot: InfoSnapshot, maxInner: number): BuiltPanel {
   const contextTopRight = formatCompactTokens(snapshot.contextWindow);
-  const tokensText = formatCompactTokens(snapshot.tokens);
+
+  const inputText = formatCompactTokens(snapshot.inputTokens);
+  const outputText = formatCompactTokens(snapshot.outputTokens);
+  const tokensIOText = `↓${inputText} ↑${outputText}`;
+
+  const cacheText =
+    snapshot.cacheRead > 0 || snapshot.cacheWrite > 0
+      ? `R:${formatCompactTokens(snapshot.cacheRead)} W:${formatCompactTokens(snapshot.cacheWrite)}`
+      : '';
+
+  const costText = formatCost(snapshot.totalCost);
 
   const rows: InfoRow[] = [
     {
@@ -62,8 +83,26 @@ export function buildInfoPanel(snapshot: InfoSnapshot, maxInner: number): BuiltP
     {
       label: 'tokens',
       labelColor: GREEN_DARK_FG,
-      measure: tokensText.length,
-      renderValue: (valueWidth) => truncateToWidth(tokensText, valueWidth, '…', true),
+      measure: tokensIOText.length,
+      renderValue: (valueWidth) => truncateToWidth(tokensIOText, valueWidth, '…', true),
+    },
+  ];
+
+  if (cacheText) {
+    rows.push({
+      label: 'cache',
+      labelColor: GREEN_DARK_FG,
+      measure: cacheText.length,
+      renderValue: (valueWidth) => truncateToWidth(cacheText, valueWidth, '…', true),
+    });
+  }
+
+  rows.push(
+    {
+      label: 'cost',
+      labelColor: GREEN_DARK_FG,
+      measure: costText.length,
+      renderValue: (valueWidth) => truncateToWidth(costText, valueWidth, '…', true),
     },
     {
       label: 'model',
@@ -71,7 +110,7 @@ export function buildInfoPanel(snapshot: InfoSnapshot, maxInner: number): BuiltP
       measure: snapshot.modelText.length,
       renderValue: (valueWidth) => truncateToWidth(snapshot.modelText, valueWidth, '…', true),
     },
-  ];
+  );
 
   const labelWidth = rows.reduce((max, row) => Math.max(max, row.label.length), 0);
 

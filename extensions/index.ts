@@ -14,7 +14,7 @@ import { buildGitPanel, EMPTY_GIT_STATE, type GitInfo } from './git';
 import { buildInfoPanel, type InfoSnapshot } from './info';
 import { buildSessionPanel, type SessionSnapshot } from './session';
 import { framePanelBody } from './panel';
-import { maxVisibleWidth, padVisible, visibleWidth } from './utils';
+import { maxVisibleWidth, padVisible, visibleWidth, setBorderColor, BORDER_COLOR_NAMES, type BorderColorName } from './utils';
 
 const SETTINGS_OVERLAY_MAX_INNER = 56;
 
@@ -62,6 +62,7 @@ type PanelState = Record<PanelId, boolean>;
 type StatusPanelsConfig = {
   enabled: boolean;
   panels: PanelState;
+  borderColor: BorderColorName;
 };
 
 function createPanelState(enabled: boolean): PanelState {
@@ -75,6 +76,7 @@ function createDefaultConfig(): StatusPanelsConfig {
   return {
     enabled: true,
     panels: createPanelState(true),
+    borderColor: 'blue',
   };
 }
 
@@ -84,7 +86,7 @@ function normalizeConfig(raw: unknown): StatusPanelsConfig {
     return defaults;
   }
 
-  const input = raw as { enabled?: unknown; panels?: Record<string, unknown> };
+  const input = raw as { enabled?: unknown; panels?: Record<string, unknown>; borderColor?: unknown };
   const panels = { ...defaults.panels };
 
   for (const panel of PANEL_DEFS) {
@@ -94,9 +96,14 @@ function normalizeConfig(raw: unknown): StatusPanelsConfig {
     }
   }
 
+  const borderColor = typeof input.borderColor === 'string' && BORDER_COLOR_NAMES.includes(input.borderColor as BorderColorName)
+    ? (input.borderColor as BorderColorName)
+    : defaults.borderColor;
+
   return {
     enabled: typeof input.enabled === 'boolean' ? input.enabled : defaults.enabled,
     panels,
+    borderColor,
   };
 }
 
@@ -159,6 +166,11 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     tokens: null,
     contextWindow: 0,
     modelText: '(no model)',
+    inputTokens: 0,
+    outputTokens: 0,
+    cacheRead: 0,
+    cacheWrite: 0,
+    totalCost: 0,
   };
 
   let sessionState: SessionSnapshot = {
@@ -185,6 +197,7 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
 
   function applyConfig(ctx?: ExtensionContext) {
     if (ctx) ctxRef = ctx;
+    setBorderColor(config.borderColor);
 
     if (!config.enabled) {
       stop();
@@ -199,6 +212,7 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     config = {
       enabled: nextEnabled,
       panels: createPanelState(nextEnabled),
+      borderColor: config.borderColor,
     };
     persistConfig(ctx);
     applyConfig(ctx);
@@ -214,6 +228,16 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     };
     persistConfig(ctx);
     applyConfig(ctx);
+  }
+
+  function setBorderColorConfig(color: BorderColorName, ctx?: ExtensionContext) {
+    config = {
+      ...config,
+      borderColor: color,
+    };
+    setBorderColor(color);
+    persistConfig(ctx);
+    renderPanels();
   }
 
   async function runGit(args: string[]): Promise<string | undefined> {
@@ -278,11 +302,43 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     const modelId = ctx.model?.id || '(no model)';
     const thinking = pi.getThinkingLevel();
 
+    // Aggregate token stats from session entries
+    let inputTokens = 0;
+    let outputTokens = 0;
+    let cacheRead = 0;
+    let cacheWrite = 0;
+    let totalCost = 0;
+
+    try {
+      const branch = ctx.sessionManager.getBranch();
+      for (const entry of branch) {
+        if (entry.type === 'message' && entry.message.role === 'assistant') {
+          const msg = entry.message as any;
+          if (msg.usage) {
+            inputTokens += msg.usage.input || 0;
+            outputTokens += msg.usage.output || 0;
+            cacheRead += msg.usage.cacheRead || 0;
+            cacheWrite += msg.usage.cacheWrite || 0;
+            if (msg.usage.cost) {
+              totalCost += msg.usage.cost.total || 0;
+            }
+          }
+        }
+      }
+    } catch {
+      // Session may not be ready yet
+    }
+
     return {
       percent: usage?.percent ?? null,
       tokens: usage?.tokens ?? null,
       contextWindow: usage?.contextWindow ?? 0,
       modelText: `${modelId} • ${thinking}`,
+      inputTokens,
+      outputTokens,
+      cacheRead,
+      cacheWrite,
+      totalCost,
     };
   }
 
@@ -435,6 +491,12 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
         currentValue: checkboxValue(isPanelEnabled(panel.id)),
         values: ['[x]', '[ ]'],
       })),
+      {
+        id: 'borderColor',
+        label: 'Border color',
+        currentValue: config.borderColor,
+        values: [...BORDER_COLOR_NAMES],
+      },
     ];
 
     const settingsTheme = getSettingsListTheme();
@@ -458,6 +520,11 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
           maxVisibleItems,
           settingsTheme,
           (id, newValue) => {
+            if (id === 'borderColor') {
+              setBorderColorConfig(newValue as BorderColorName, ctx);
+              return;
+            }
+
             const nextEnabled = newValue === '[x]';
             if (id === 'enabled') {
               setMasterEnabled(nextEnabled, ctx);

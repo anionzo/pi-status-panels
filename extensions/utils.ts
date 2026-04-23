@@ -6,18 +6,42 @@ export const GOLD_FG = '\x1b[38;2;212;162;46m';
 export const BLUE_FG = '\x1b[38;2;86;156;214m';
 export const GREEN_FG = '\x1b[38;2;96;176;88m';
 export const GREEN_DARK_FG = '\x1b[38;2;62;124;66m';
+export const CYAN_FG = '\x1b[38;2;78;201;176m';
+export const MAGENTA_FG = '\x1b[38;2;198;120;221m';
+export const RED_FG = '\x1b[38;2;224;108;117m';
+export const WHITE_FG = '\x1b[38;2;200;200;200m';
 export const RESET_FG = '\x1b[39m';
+
+export type BorderColorName = 'blue' | 'gold' | 'green' | 'cyan' | 'magenta' | 'red' | 'white';
+
+export const BORDER_COLORS: Record<BorderColorName, string> = {
+  blue: BLUE_FG,
+  gold: GOLD_FG,
+  green: GREEN_FG,
+  cyan: CYAN_FG,
+  magenta: MAGENTA_FG,
+  red: RED_FG,
+  white: WHITE_FG,
+};
+
+export const BORDER_COLOR_NAMES: BorderColorName[] = ['blue', 'gold', 'green', 'cyan', 'magenta', 'red', 'white'];
+
+let currentBorderColor: string = BLUE_FG;
+
+export function setBorderColor(color: BorderColorName) {
+  currentBorderColor = BORDER_COLORS[color] || BLUE_FG;
+}
+
+export function getBorderColor(): string {
+  return currentBorderColor;
+}
 
 export function tint(text: string, color: string): string {
   return `${color}${text}${RESET_FG}`;
 }
 
-export function gold(text: string): string {
-  return tint(text, GOLD_FG);
-}
-
-export function blue(text: string): string {
-  return tint(text, BLUE_FG);
+export function border(text: string): string {
+  return tint(text, currentBorderColor);
 }
 
 export function padVisible(text: string, width: number): string {
