@@ -320,7 +320,7 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
   }
 
   async function parseDiffStats(): Promise<{ insertions: number; deletions: number }> {
-    const raw = await runGit(['diff', '--shortstat']);
+    const raw = await runGit(['diff', 'HEAD', '--shortstat']);
     if (!raw) return { insertions: 0, deletions: 0 };
 
     const insMatch = raw.match(/(\d+) insertion/);
