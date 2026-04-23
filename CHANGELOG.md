@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.0
+
+### New: Command palette popup
+- Settings overlay repositioned to **top-center** (popup drops from top, like autocomplete)
+- Added **search/filter** — type to filter settings items
+- Added **description** for each setting (shown when selected)
+- Items organized with emoji group headers: ⚡ Quick, 🎛️ Panels, 🎨 Appearance
+- Wider responsive layout (`55%` width, min 48 cols)
+
+### New: Shortcuts & aliases
+- **`/sp`** — short alias for `/status-panels`
+- **`Ctrl+Shift+P`** — keyboard shortcut to open settings popup
+
+### Cleanup
+- Removed printable-key pass-through (typing while overlay is open now handled by search)
+- Removed unused `decodeKittyPrintable` / `parseKey` imports
+- Fixed `pi.image` URL in package.json (screenshot.png → image.png)
+
 ## 0.4.0
 
 ### New: SYSTEM panel

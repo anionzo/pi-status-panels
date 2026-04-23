@@ -51,12 +51,19 @@ pi install /path/to/pi-status-panels
 
 | Command                  | Description                                           |
 | ------------------------ | ----------------------------------------------------- |
-| `/status-panels`         | Open the settings overlay to toggle panels and colors |
+| `/status-panels`         | Open the settings popup to toggle panels and colors   |
+| `/sp`                    | Alias for `/status-panels`                            |
 | `/status-panels on\|off` | Enable or disable all panels                          |
+
+## Keyboard Shortcuts
+
+| Shortcut         | Description                    |
+| ---------------- | ------------------------------ |
+| `Ctrl+Shift+P`   | Open status panels settings    |
 
 ## Settings
 
-Run `/status-panels` to open the settings overlay:
+Run `/sp` (or `/status-panels`, or press `Ctrl+Shift+P`) to open the settings popup:
 
 - **Show all panels** — master toggle
 - **Git / Info / Session / System** — toggle individual panels

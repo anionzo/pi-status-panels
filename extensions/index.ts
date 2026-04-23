@@ -3,9 +3,7 @@ import { dirname, join } from 'node:path';
 import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
 import { getAgentDir, getSettingsListTheme } from '@mariozechner/pi-coding-agent';
 import {
-  decodeKittyPrintable,
-  matchesKey,
-  parseKey,
+  Key,
   type SettingItem,
   SettingsList,
   truncateToWidth,
@@ -17,7 +15,7 @@ import { buildSystemPanel, type SystemSnapshot, readSystemStats } from './system
 import { framePanelBody } from './panel';
 import { maxVisibleWidth, padVisible, visibleWidth, setBorderColor, setTextColor, COLOR_NAMES, type ColorName } from './utils';
 
-const SETTINGS_OVERLAY_MAX_INNER = 56;
+const SETTINGS_OVERLAY_MAX_INNER = 62;
 
 function computeSettingsOverlayInner(bodyLines: string[], availableWidth: number): number {
   const maxInner = Math.max(24, Math.min(availableWidth - 2, SETTINGS_OVERLAY_MAX_INNER));
@@ -25,24 +23,6 @@ function computeSettingsOverlayInner(bodyLines: string[], availableWidth: number
     24,
     Math.min(maxInner, Math.max(maxVisibleWidth(bodyLines), visibleWidth('─ STATUS PANELS ')) + 2),
   );
-}
-
-function getPrintableTypingKey(data: string): string | undefined {
-  const kittyPrintable = decodeKittyPrintable(data);
-  if (kittyPrintable && kittyPrintable !== ' ') {
-    return kittyPrintable;
-  }
-
-  const parsed = parseKey(data);
-  if (parsed && parsed.length === 1 && parsed !== ' ') {
-    return parsed;
-  }
-
-  if (data.length === 1 && data !== ' ' && /^[\x21-\x7E]$/.test(data)) {
-    return data;
-  }
-
-  return undefined;
 }
 
 const WIDGET_ID = 'status-panels';
@@ -615,43 +595,51 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     ctxRef = ctx;
 
     const items: SettingItem[] = [
+      // ── Quick ──
       {
         id: 'enabled',
-        label: 'Show all panels',
+        label: '⚡ Show all panels',
+        description: 'Master toggle — enable or disable every panel at once',
         currentValue: checkboxValue(config.enabled),
         values: ['[x]', '[ ]'],
       },
+      // ── Panels ──
       ...PANEL_DEFS.map((panel) => ({
         id: panel.id,
-        label: panel.label,
+        label: `   ${panel.label}`,
+        description: `Toggle the ${panel.label} panel`,
         currentValue: checkboxValue(isPanelEnabled(panel.id)),
         values: ['[x]', '[ ]'],
       })),
+      // ── Appearance ──
       {
         id: 'borderColor',
-        label: 'Border color',
+        label: '🎨 Border color',
+        description: 'Color of panel frames',
         currentValue: config.borderColor,
         values: [...COLOR_NAMES],
       },
       {
         id: 'textColor',
-        label: 'Text color',
+        label: '🎨 Text color',
+        description: 'Color of panel labels (bright + dim pair)',
         currentValue: config.textColor,
         values: [...COLOR_NAMES],
       },
     ];
 
     const settingsTheme = getSettingsListTheme();
-    const maxVisibleItems = Math.min(items.length + 2, 10);
+    const maxVisibleItems = Math.min(items.length + 2, 12);
     const probeList = new SettingsList(
       items,
       maxVisibleItems,
       settingsTheme,
       () => {},
       () => {},
+      { enableSearch: true },
     );
     const probeLines = probeList.render(Math.max(8, SETTINGS_OVERLAY_MAX_INNER - 2));
-    const overlayBodyLines = ['Choose which panels are visible', '', ...probeLines];
+    const overlayBodyLines = ['Toggle panels & customize appearance', '', ...probeLines];
     const overlayWidth =
       computeSettingsOverlayInner(overlayBodyLines, SETTINGS_OVERLAY_MAX_INNER + 2) + 2;
 
@@ -684,6 +672,7 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
             setPanelEnabled(id as PanelId, nextEnabled, ctx);
           },
           () => done(undefined),
+          { enableSearch: true },
         );
 
         return {
@@ -695,7 +684,7 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
             );
             const listLines = settingsList.render(Math.max(8, provisionalInner - 2));
             const bodyLines = [
-              theme.fg('muted', 'Choose which panels are visible'),
+              theme.fg('muted', 'Toggle panels & customize appearance'),
               '',
               ...listLines,
             ];
@@ -711,21 +700,6 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
             settingsList.invalidate();
           },
           handleInput(data: string) {
-            const printableKey = getPrintableTypingKey(data);
-            if (
-              printableKey &&
-              !matchesKey(data, 'escape') &&
-              !matchesKey(data, 'return') &&
-              !matchesKey(data, 'up') &&
-              !matchesKey(data, 'down') &&
-              !matchesKey(data, 'left') &&
-              !matchesKey(data, 'right')
-            ) {
-              done(undefined);
-              queueMicrotask(() => ctx.ui.pasteToEditor(printableKey));
-              return;
-            }
-
             settingsList.handleInput?.(data);
           },
         };
@@ -733,32 +707,48 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
       {
         overlay: true,
         overlayOptions: {
-          anchor: 'center',
-          width: overlayWidth,
+          anchor: 'top-center',
+          width: '55%',
+          minWidth: 48,
+          margin: { top: 2, left: 2, right: 2 },
         },
       },
     );
   }
 
+  const commandHandler = async (args: string, ctx: ExtensionContext) => {
+    ctxRef = ctx;
+    const mode = (args || '').trim().toLowerCase();
+
+    if (mode === '' || mode === 'settings') {
+      await showSettingsOverlay(ctx);
+      return;
+    }
+
+    if (!['on', 'off'].includes(mode)) {
+      ctx.ui.notify('Usage: /status-panels [on|off]', 'warning');
+      return;
+    }
+
+    const nextEnabled = mode === 'on';
+    setMasterEnabled(nextEnabled, ctx);
+    ctx.ui.notify(nextEnabled ? 'Status panels visible' : 'Status panels hidden', 'info');
+  };
+
   pi.registerCommand('status-panels', {
     description: 'Open status panel settings, or use /status-panels [on|off]',
-    handler: async (args, ctx) => {
-      ctxRef = ctx;
-      const mode = (args || '').trim().toLowerCase();
+    handler: commandHandler as any,
+  });
 
-      if (mode === '' || mode === 'settings') {
-        await showSettingsOverlay(ctx);
-        return;
-      }
+  pi.registerCommand('sp', {
+    description: 'Alias for /status-panels — open settings popup',
+    handler: commandHandler as any,
+  });
 
-      if (!['on', 'off'].includes(mode)) {
-        ctx.ui.notify('Usage: /status-panels [on|off]', 'warning');
-        return;
-      }
-
-      const nextEnabled = mode === 'on';
-      setMasterEnabled(nextEnabled, ctx);
-      ctx.ui.notify(nextEnabled ? 'Status panels visible' : 'Status panels hidden', 'info');
+  pi.registerShortcut(Key.ctrlShift('p'), {
+    description: 'Toggle status panels settings',
+    handler: async (ctx) => {
+      await showSettingsOverlay(ctx);
     },
   });
 
