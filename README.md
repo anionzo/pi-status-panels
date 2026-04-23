@@ -7,8 +7,8 @@ Responsive status panels rendered below the editor in [pi](https://pi.dev).
 ## Panels
 
 - **GIT** — worktree name, branch, upstream tracking, ahead/behind counts
-- **INFO** — LLM context usage bar (color-coded), active model and thinking level
-- **NOW PLAYING** — Spotify track, artist, and progress bar (macOS only)
+- **INFO** — LLM context usage bar (color-coded), token count, active model and thinking level
+- **SESSION** — elapsed time, session start time, turn count
 
 Panels auto-size to their content, render side-by-side when terminal width allows, and fall back to a stacked layout on narrow terminals.
 
@@ -30,14 +30,13 @@ pi install npm:@anionzo/pi-status-panels
 To add a new panel:
 
 1. Create a new file in `extensions/` (e.g. `my-panel.ts`)
-2. Export a `buildMyPanel()` function following the pattern in `git.ts` or `info.ts`
+2. Export a `buildMyPanel()` function following the pattern in `git.ts` or `session.ts`
 3. Register it in `PANEL_DEFS` in `index.ts`
-4. Add rendering logic in `buildTopBlock()` / `renderPanels()`
+4. Add rendering logic in `buildAllPanels()`
 
 ## Requirements
 
-- macOS (Spotify integration uses osascript/AppleScript)
-- Pi interactive mode
+- Pi interactive mode (panels use the widget API)
 
 ## License
 

@@ -50,6 +50,7 @@ function renderBar(percent: number | null, valueWidth: number): string {
 
 export function buildInfoPanel(snapshot: InfoSnapshot, maxInner: number): BuiltPanel {
   const contextTopRight = formatCompactTokens(snapshot.contextWindow);
+  const tokensText = formatCompactTokens(snapshot.tokens);
 
   const rows: InfoRow[] = [
     {
@@ -57,6 +58,12 @@ export function buildInfoPanel(snapshot: InfoSnapshot, maxInner: number): BuiltP
       labelColor: GREEN_FG,
       measure: 20 + 1 + `${Math.round(snapshot.percent ?? 0)}%`.length,
       renderValue: (valueWidth) => renderBar(snapshot.percent, valueWidth),
+    },
+    {
+      label: 'tokens',
+      labelColor: GREEN_DARK_FG,
+      measure: tokensText.length,
+      renderValue: (valueWidth) => truncateToWidth(tokensText, valueWidth, '…', true),
     },
     {
       label: 'model',

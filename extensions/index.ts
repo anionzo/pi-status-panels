@@ -12,8 +12,8 @@ import {
 } from '@mariozechner/pi-tui';
 import { buildGitPanel, EMPTY_GIT_STATE, type GitInfo } from './git';
 import { buildInfoPanel, type InfoSnapshot } from './info';
+import { buildSessionPanel, type SessionSnapshot } from './session';
 import { framePanelBody } from './panel';
-import { buildNowPlayingPanel, type PlayerState, type SpotifyInfo } from './now-playing';
 import { maxVisibleWidth, padVisible, visibleWidth } from './utils';
 
 const SETTINGS_OVERLAY_MAX_INNER = 56;
@@ -46,16 +46,14 @@ function getPrintableTypingKey(data: string): string | undefined {
 
 const WIDGET_ID = 'status-panels';
 const REFRESH_MS = 5000;
-const NOW_PLAYING_FETCH_PLAYING_MS = 1000;
-const NOW_PLAYING_FETCH_IDLE_MS = 2500;
-const TICK_MS = 250;
+const TICK_MS = 1000;
 const GAP = ' ';
 const CONFIG_PATH = join(getAgentDir(), 'state', 'extensions', 'status-panels', 'config.json');
 
 const PANEL_DEFS = [
   { id: 'git', label: 'Git', defaultEnabled: true },
   { id: 'info', label: 'Info', defaultEnabled: true },
-  { id: 'nowPlaying', label: 'Spotify', defaultEnabled: true },
+  { id: 'session', label: 'Session', defaultEnabled: true },
 ] as const;
 
 type PanelId = (typeof PANEL_DEFS)[number]['id'];
@@ -148,26 +146,11 @@ function combineSideBySide(left: string[], leftWidth: number, right: string[]): 
   return output;
 }
 
-function emptySpotifyState(): SpotifyInfo {
-  return {
-    running: false,
-    state: 'stopped',
-    track: '',
-    artist: '',
-    positionSec: 0,
-    durationMs: 0,
-  };
-}
-
 export default function statusPanelsExtension(pi: ExtensionAPI) {
   let ctxRef: ExtensionContext | null = null;
   let timer: ReturnType<typeof setInterval> | null = null;
   let config = loadConfig();
-  let fetchingSpotify = false;
   let lastGitRefreshAt = 0;
-  let lastSpotifyFetchAt = 0;
-  let gradientPhase = 0;
-  let gradientTick = 0;
 
   let gitState: GitInfo = EMPTY_GIT_STATE;
 
@@ -178,7 +161,11 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     modelText: '(no model)',
   };
 
-  let spotifyState: SpotifyInfo = emptySpotifyState();
+  let sessionState: SessionSnapshot = {
+    startedAt: Date.now(),
+    elapsed: 0,
+    turnCount: 0,
+  };
 
   function isPanelEnabled(panelId: PanelId): boolean {
     return config.panels[panelId];
@@ -198,10 +185,6 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
 
   function applyConfig(ctx?: ExtensionContext) {
     if (ctx) ctxRef = ctx;
-
-    if (!isPanelEnabled('nowPlaying')) {
-      spotifyState = emptySpotifyState();
-    }
 
     if (!config.enabled) {
       stop();
@@ -303,94 +286,82 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     };
   }
 
-  async function readSpotify(): Promise<SpotifyInfo> {
-    const script = `
-if application "Spotify" is running then
-  tell application "Spotify"
-    set ps to player state as string
-    if ps is "stopped" then
-      return "RUNNING\nstopped\n\n\n0\n0"
-    end if
-    set tName to name of current track
-    set tArtist to artist of current track
-    set tPos to player position
-    set tDur to duration of current track
-    return "RUNNING\n" & ps & "\n" & tName & "\n" & tArtist & "\n" & (tPos as string) & "\n" & (tDur as string)
-  end tell
-else
-  return "NOT_RUNNING"
-end if
-`.trim();
-
-    try {
-      const result = await pi.exec('osascript', ['-e', script], { timeout: 2000 });
-      if (result.code !== 0) {
-        return emptySpotifyState();
-      }
-
-      const output = result.stdout.trim();
-      if (output === 'NOT_RUNNING') {
-        return emptySpotifyState();
-      }
-
-      const lines = output.split('\n');
-      const stateRaw = (lines[1] || 'stopped').trim();
-      const state: PlayerState =
-        stateRaw === 'playing' ? 'playing' : stateRaw === 'paused' ? 'paused' : 'stopped';
-
-      const positionSec = Number.parseFloat((lines[4] || '0').replace(',', '.'));
-      const durationMs = Number.parseInt(lines[5] || '0', 10);
-
-      return {
-        running: true,
-        state,
-        track: lines[2] || '',
-        artist: lines[3] || '',
-        positionSec: Number.isFinite(positionSec) ? positionSec : 0,
-        durationMs: Number.isFinite(durationMs) ? durationMs : 0,
-      };
-    } catch {
-      return emptySpotifyState();
-    }
+  function updateSessionElapsed() {
+    sessionState = {
+      ...sessionState,
+      elapsed: Date.now() - sessionState.startedAt,
+    };
   }
 
-  function buildTopBlock(safeWidth: number): string[] {
-    const panels: Array<{ lines: string[]; width: number }> = [];
+  function buildAllPanels(safeWidth: number): string[] {
+    const topPanels: Array<{ lines: string[]; width: number }> = [];
 
     if (isPanelEnabled('git')) {
-      panels.push(buildGitPanel(gitState, safeWidth - 2));
+      topPanels.push(buildGitPanel(gitState, safeWidth - 2));
     }
 
     if (isPanelEnabled('info')) {
-      panels.push(buildInfoPanel(infoState, safeWidth - 2));
+      topPanels.push(buildInfoPanel(infoState, safeWidth - 2));
     }
 
-    if (panels.length === 0) {
-      return [];
+    // Build top row (git + info side by side)
+    let topBlock: string[] = [];
+    if (topPanels.length === 1) {
+      topBlock = topPanels[0]!.lines;
+    } else if (topPanels.length === 2) {
+      const [first, second] = topPanels;
+      const naturalCombined = first!.width + visibleWidth(GAP) + second!.width;
+      if (naturalCombined <= safeWidth) {
+        topBlock = combineSideBySide(first!.lines, first!.width, second!.lines);
+      } else {
+        const leftOuterTarget = Math.max(28, Math.floor((safeWidth - visibleWidth(GAP)) * 0.55));
+        const rightOuterTarget = Math.max(28, safeWidth - visibleWidth(GAP) - leftOuterTarget);
+
+        const gitCompact = buildGitPanel(gitState, Math.max(24, leftOuterTarget - 2));
+        const infoCompact = buildInfoPanel(infoState, Math.max(24, rightOuterTarget - 2));
+
+        const compactCombined = gitCompact.width + visibleWidth(GAP) + infoCompact.width;
+        if (compactCombined <= safeWidth) {
+          topBlock = combineSideBySide(gitCompact.lines, gitCompact.width, infoCompact.lines);
+        } else {
+          topBlock = [...first!.lines, ...second!.lines];
+        }
+      }
     }
 
-    if (panels.length === 1) {
-      return panels[0]!.lines;
+    // Build session panel
+    if (!isPanelEnabled('session')) {
+      return topBlock;
     }
 
-    const [first, second] = panels;
-    const naturalCombined = first!.width + visibleWidth(GAP) + second!.width;
-    if (naturalCombined <= safeWidth) {
-      return combineSideBySide(first!.lines, first!.width, second!.lines);
+    const sessionPanel = buildSessionPanel(sessionState, safeWidth - 2);
+
+    if (topBlock.length === 0) {
+      return sessionPanel.lines;
     }
 
-    const leftOuterTarget = Math.max(28, Math.floor((safeWidth - visibleWidth(GAP)) * 0.55));
-    const rightOuterTarget = Math.max(28, safeWidth - visibleWidth(GAP) - leftOuterTarget);
+    const topWidth = maxVisibleWidth(topBlock);
+    const gapWidth = visibleWidth(GAP);
 
-    const gitCompact = buildGitPanel(gitState, Math.max(24, leftOuterTarget - 2));
-    const infoCompact = buildInfoPanel(infoState, Math.max(24, rightOuterTarget - 2));
-
-    const compactCombined = gitCompact.width + visibleWidth(GAP) + infoCompact.width;
-    if (compactCombined <= safeWidth) {
-      return combineSideBySide(gitCompact.lines, gitCompact.width, infoCompact.lines);
+    // Try side by side with top block
+    if (topWidth + gapWidth + sessionPanel.width <= safeWidth) {
+      return combineSideBySide(topBlock, topWidth, sessionPanel.lines);
     }
 
-    return [...first!.lines, ...second!.lines];
+    // Try compact session
+    const availableForSession = safeWidth - topWidth - gapWidth;
+    if (availableForSession >= 26) {
+      const sessionCompact = buildSessionPanel(
+        sessionState,
+        Math.max(22, availableForSession - 2),
+      );
+      if (topWidth + gapWidth + sessionCompact.width <= safeWidth) {
+        return combineSideBySide(topBlock, topWidth, sessionCompact.lines);
+      }
+    }
+
+    // Stack vertically
+    return [...topBlock, ...sessionPanel.lines];
   }
 
   function renderPanels() {
@@ -402,48 +373,7 @@ end if
         invalidate() {},
         render(width: number) {
           const safeWidth = Math.max(1, width);
-          const clampLines = (lines: string[]) =>
-            lines.map((line) => truncateToWidth(line, safeWidth));
-
-          const topBlock = buildTopBlock(safeWidth);
-          if (!isPanelEnabled('nowPlaying')) {
-            return clampLines(topBlock);
-          }
-
-          const nowPlayingNatural = buildNowPlayingPanel(
-            spotifyState,
-            gradientPhase,
-            safeWidth - 2,
-          );
-          if (!nowPlayingNatural) {
-            return clampLines(topBlock);
-          }
-
-          if (topBlock.length === 0) {
-            return clampLines(nowPlayingNatural.lines);
-          }
-
-          const topWidth = maxVisibleWidth(topBlock);
-          const gapWidth = visibleWidth(GAP);
-
-          if (topWidth + gapWidth + nowPlayingNatural.width <= safeWidth) {
-            return clampLines(combineSideBySide(topBlock, topWidth, nowPlayingNatural.lines));
-          }
-
-          const availableForNowPlaying = safeWidth - topWidth - gapWidth;
-          if (availableForNowPlaying >= 30) {
-            const nowPlayingCompact = buildNowPlayingPanel(
-              spotifyState,
-              gradientPhase,
-              Math.max(28, availableForNowPlaying - 2),
-            );
-
-            if (nowPlayingCompact && topWidth + gapWidth + nowPlayingCompact.width <= safeWidth) {
-              return clampLines(combineSideBySide(topBlock, topWidth, nowPlayingCompact.lines));
-            }
-          }
-
-          return clampLines([...topBlock, ...nowPlayingNatural.lines]);
+          return buildAllPanels(safeWidth).map((line) => truncateToWidth(line, safeWidth));
         },
       }),
       { placement: 'belowEditor' },
@@ -460,30 +390,11 @@ end if
     lastGitRefreshAt = now;
   }
 
-  async function refreshSpotify(force = false) {
-    if (!ctxRef || !isPanelEnabled('nowPlaying') || fetchingSpotify) return;
-    const now = Date.now();
-    const interval =
-      spotifyState.state === 'playing' ? NOW_PLAYING_FETCH_PLAYING_MS : NOW_PLAYING_FETCH_IDLE_MS;
-
-    if (!force && now - lastSpotifyFetchAt < interval) return;
-
-    fetchingSpotify = true;
-    spotifyState = await readSpotify();
-    fetchingSpotify = false;
-    lastSpotifyFetchAt = now;
-  }
-
-  async function tick(forceCore = false, forceSpotify = false) {
+  async function tick(forceCore = false) {
     if (!config.enabled || !ctxRef?.hasUI) return;
 
-    gradientTick = (gradientTick + 1) % 2;
-    if (gradientTick === 0) {
-      gradientPhase = (gradientPhase + 1) % 2;
-    }
-
+    updateSessionElapsed();
     await refreshCore(forceCore);
-    await refreshSpotify(forceSpotify);
     renderPanels();
   }
 
@@ -491,9 +402,9 @@ end if
     if (!config.enabled || !ctxRef?.hasUI) return;
     if (timer) return;
 
-    void tick(true, true);
+    void tick(true);
     timer = setInterval(() => {
-      void tick(false, false);
+      void tick(false);
     }, TICK_MS);
   }
 
@@ -639,18 +550,24 @@ end if
 
   pi.on('session_start', async (_event, ctx) => {
     config = loadConfig();
+    sessionState = { startedAt: Date.now(), elapsed: 0, turnCount: 0 };
     applyConfig(ctx);
   });
 
   pi.on('session_switch', async (_event, ctx) => {
     config = loadConfig();
+    sessionState = { startedAt: Date.now(), elapsed: 0, turnCount: 0 };
     applyConfig(ctx);
   });
 
   pi.on('turn_end', async (_event, ctx) => {
     ctxRef = ctx;
+    sessionState = {
+      ...sessionState,
+      turnCount: sessionState.turnCount + 1,
+    };
     if (!config.enabled) return;
-    void tick(true, true);
+    void tick(true);
   });
 
   pi.on('model_select', async (_event, ctx) => {
