@@ -4,6 +4,8 @@
 
 Responsive status panels rendered below the editor in [pi](https://pi.dev).
 
+![Status Panels Preview](assets/image.png)
+
 ## Panels
 
 ### GIT
