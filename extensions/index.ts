@@ -176,7 +176,6 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     inputTokens: 0,
     outputTokens: 0,
     cacheRead: 0,
-    cacheWrite: 0,
     totalCost: 0,
   };
 
@@ -325,7 +324,6 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     let inputTokens = 0;
     let outputTokens = 0;
     let cacheRead = 0;
-    let cacheWrite = 0;
     let totalCost = 0;
 
     try {
@@ -337,7 +335,6 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
             inputTokens += msg.usage.input || 0;
             outputTokens += msg.usage.output || 0;
             cacheRead += msg.usage.cacheRead || 0;
-            cacheWrite += msg.usage.cacheWrite || 0;
             if (msg.usage.cost) {
               totalCost += msg.usage.cost.total || 0;
             }
@@ -356,7 +353,6 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
       inputTokens,
       outputTokens,
       cacheRead,
-      cacheWrite,
       totalCost,
     };
   }
