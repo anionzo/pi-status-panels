@@ -1,6 +1,6 @@
 # pi-status-panels
 
-> Originally forked from [@alasano/pi-panels](https://github.com/anionzo/house-of-pi/tree/master/packages/pi-panels) — rebuilt and maintained independently by [@anionzo](https://github.com/anionzo).
+> Originally forked from [@alasano/pi-panels](https://github.com/alasano/house-of-pi/tree/master/packages/pi-panels) — rebuilt and maintained independently by [@anionzo](https://github.com/anionzo).
 
 Responsive status panels rendered below the editor in [pi](https://pi.dev).
 
