@@ -6,9 +6,20 @@ Responsive status panels rendered below the editor in [pi](https://pi.dev).
 
 ## Panels
 
-- **GIT** — worktree name, branch, upstream tracking, ahead/behind counts
-- **INFO** — context usage bar, token I/O breakdown (↓input ↑output), cache stats, cost, model & thinking level
-- **SESSION** — elapsed time, session start time, turn count
+### GIT
+- Worktree name, branch, upstream tracking (shown only when non-default)
+- Ahead/behind counts (`↑0 ↓0`)
+- Insertions/deletions from unstaged changes (`+15 -3`)
+
+### INFO
+- Context usage bar (color-coded green → red)
+- Token breakdown: `↓input ↑output • cache • $cost`
+- Provider & model: `anthropic │ Claude Sonnet 4 • high`
+
+### SESSION
+- Elapsed time since session start
+- Session start time
+- Turn count
 
 Panels auto-size to their content, render side-by-side when terminal width allows, and fall back to a stacked layout on narrow terminals.
 
@@ -33,11 +44,20 @@ pi install /path/to/pi-status-panels
 
 ## Settings
 
-The settings overlay lets you:
-- Toggle individual panels on/off
-- Choose border color: **blue**, **gold**, **green**, **cyan**, **magenta**, **red**, **white**
+Run `/status-panels` to open the settings overlay:
 
-Preferences are saved at `~/.pi/agent/state/extensions/status-panels/config.json`.
+- **Show all panels** — master toggle
+- **Git / Info / Session** — toggle individual panels
+- **Border color** — panel frame color (blue, gold, green, cyan, magenta, red, white)
+- **Text color** — label text color with bright/dim pair (blue, gold, green, cyan, magenta, red, white)
+
+Preferences are persisted at `~/.pi/agent/state/extensions/status-panels/config.json`.
+
+## Refresh behavior
+
+- Git info & diff stats refresh every 5 seconds and immediately after each agent turn
+- LLM context, tokens, and model info update on turn end and model switch
+- Session timer ticks every 1 second
 
 ## Customization
 
