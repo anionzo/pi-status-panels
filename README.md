@@ -71,6 +71,21 @@ Preferences are persisted at `~/.pi/agent/state/extensions/status-panels/config.
 - Session timer ticks every 1 second
 - Context warning notifies at 80% (warning) and 90% (critical)
 
+## Bundled Themes
+
+6 color themes included (from [oh-pi-themes](https://github.com/ifiokjr/oh-pi)):
+
+| Theme | Style |
+| ----- | ----- |
+| `catppuccin-mocha` | Warm pastel on dark |
+| `cyberpunk` | Neon pink/cyan |
+| `gruvbox-dark` | Retro warm tones |
+| `nord` | Arctic, blue-grey |
+| `oh-p-dark` | Cyan accent dark |
+| `tokyo-night` | Purple/blue night |
+
+Switch themes with `Ctrl+T` or `/theme <name>` in pi.
+
 ## Customization
 
 To add a new panel:

@@ -1,7 +1,7 @@
 {
   "name": "@anionzo/pi-status-panels",
   "version": "0.4.0",
-  "description": "Responsive status panels for pi — git info, LLM context & token usage, session stats",
+  "description": "Responsive status panels & bundled themes for pi — git info, LLM context & token usage, system stats",
   "keywords": [
     "pi-package"
   ],
@@ -18,10 +18,14 @@
     "extensions": [
       "./extensions"
     ],
+    "themes": [
+      "./themes"
+    ],
     "image": "https://raw.githubusercontent.com/anionzo/pi-status-panels/master/assets/screenshot.png"
   },
   "files": [
     "extensions",
+    "themes",
     "assets",
     "README.md"
   ],

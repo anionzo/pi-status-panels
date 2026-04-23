@@ -8,6 +8,10 @@
 - **GPU utilization** via `nvidia-smi` (auto-detected, NVIDIA only)
 - **VRAM usage** shown when GPU detected
 
+### New: Bundled themes
+- 6 color themes from [oh-pi-themes](https://github.com/ifiokjr/oh-pi): catppuccin-mocha, cyberpunk, gruvbox-dark, nord, oh-p-dark, tokyo-night
+- Switch with `Ctrl+T` or `/theme <name>`
+
 ### Git panel
 - **Staged vs unstaged** diff stats shown separately with file counts
 - **Untracked files** count (shown only when > 0)
