@@ -1,14 +1,14 @@
 # pi-status-panels
 
-Responsive status panels rendered below the editor in [pi](https://pi.dev).
+> Originally forked from [@alasano/pi-panels](https://github.com/anionzo/house-of-pi/tree/master/packages/pi-panels) — rebuilt and maintained independently by [@anionzo](https://github.com/anionzo).
 
-Forked from [@alasano/pi-panels](https://github.com/anionzo/house-of-pi/tree/master/packages/pi-panels) with customizations.
+Responsive status panels rendered below the editor in [pi](https://pi.dev).
 
 ## Panels
 
-- **GIT** - worktree name, branch, upstream tracking, ahead/behind counts
-- **INFO** - LLM context usage bar (color-coded), active model and thinking level
-- **NOW PLAYING** - Spotify track, artist, and progress bar (macOS only)
+- **GIT** — worktree name, branch, upstream tracking, ahead/behind counts
+- **INFO** — LLM context usage bar (color-coded), active model and thinking level
+- **NOW PLAYING** — Spotify track, artist, and progress bar (macOS only)
 
 Panels auto-size to their content, render side-by-side when terminal width allows, and fall back to a stacked layout on narrow terminals.
 
@@ -38,10 +38,6 @@ To add a new panel:
 
 - macOS (Spotify integration uses osascript/AppleScript)
 - Pi interactive mode
-
-## Credits
-
-Based on [pi-panels](https://github.com/anionzo/house-of-pi/tree/master/packages/pi-panels) by [@alasano](https://github.com/alasano).
 
 ## License
 
