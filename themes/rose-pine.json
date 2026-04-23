@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/badlogic/pi-mono/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json",
+  "name": "rose-pine",
+  "vars": {
+    "base": "#191724", "surface": "#1f1d2e", "overlay": "#26233a",
+    "muted": "#6e6a86", "subtle": "#908caa", "text": "#e0def4",
+    "love": "#eb6f92", "gold": "#f6c177", "rose": "#ebbcba",
+    "pine": "#31748f", "foam": "#9ccfd8", "iris": "#c4a7e7"
+  },
+  "colors": {
+    "accent": "iris", "border": "overlay", "borderAccent": "iris", "borderMuted": "surface",
+    "success": "foam", "error": "love", "warning": "gold", "muted": "muted", "dim": "overlay",
+    "text": "", "thinkingText": "muted",
+    "selectedBg": "#26233a", "userMessageBg": "#26233a", "userMessageText": "",
+    "customMessageBg": "#26233a", "customMessageText": "", "customMessageLabel": "iris",
+    "toolPendingBg": "#191724", "toolSuccessBg": "#1a2420", "toolErrorBg": "#241a1e",
+    "toolTitle": "iris", "toolOutput": "",
+    "mdHeading": "rose", "mdLink": "foam", "mdLinkUrl": "muted", "mdCode": "foam",
+    "mdCodeBlock": "", "mdCodeBlockBorder": "overlay", "mdQuote": "muted",
+    "mdQuoteBorder": "overlay", "mdHr": "overlay", "mdListBullet": "iris",
+    "toolDiffAdded": "foam", "toolDiffRemoved": "love", "toolDiffContext": "muted",
+    "syntaxComment": "muted", "syntaxKeyword": "pine", "syntaxFunction": "rose",
+    "syntaxVariable": "iris", "syntaxString": "gold", "syntaxNumber": "gold",
+    "syntaxType": "foam", "syntaxOperator": "pine", "syntaxPunctuation": "subtle",
+    "thinkingOff": "overlay", "thinkingMinimal": "muted", "thinkingLow": "foam",
+    "thinkingMedium": "iris", "thinkingHigh": "rose", "thinkingXhigh": "love",
+    "bashMode": "gold"
+  }
+}

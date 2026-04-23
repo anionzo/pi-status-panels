@@ -10,6 +10,7 @@
 
 ### New: Bundled themes
 - 6 color themes from [oh-pi-themes](https://github.com/ifiokjr/oh-pi): catppuccin-mocha, cyberpunk, gruvbox-dark, nord, oh-p-dark, tokyo-night
+- 4 custom themes: dracula, one-dark, monokai, rosé-pine
 - Switch with `Ctrl+T` or `/theme <name>`
 
 ### Git panel

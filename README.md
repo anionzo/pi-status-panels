@@ -73,15 +73,19 @@ Preferences are persisted at `~/.pi/agent/state/extensions/status-panels/config.
 
 ## Bundled Themes
 
-6 color themes included (from [oh-pi-themes](https://github.com/ifiokjr/oh-pi)):
+6 color themes included (from [oh-pi-themes](https://github.com/ifiokjr/oh-pi)) + 4 custom themes:
 
 | Theme | Style |
 | ----- | ----- |
 | `catppuccin-mocha` | Warm pastel on dark |
 | `cyberpunk` | Neon pink/cyan |
+| `dracula` | Purple/pink classic |
 | `gruvbox-dark` | Retro warm tones |
+| `monokai` | Vibrant Sublime classic |
 | `nord` | Arctic, blue-grey |
 | `oh-p-dark` | Cyan accent dark |
+| `one-dark` | Atom editor classic |
+| `rose-pine` | Muted elegant, rose/gold/pine |
 | `tokyo-night` | Purple/blue night |
 
 Switch themes with `Ctrl+T` or `/theme <name>` in pi.

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://raw.githubusercontent.com/badlogic/pi-mono/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json",
+  "name": "monokai",
+  "vars": {
+    "bg": "#272822", "bg_hl": "#3e3d32", "gutter": "#49483e",
+    "yellow": "#e6db74", "orange": "#fd971f", "red": "#f92672",
+    "magenta": "#ae81ff", "blue": "#66d9ef", "green": "#a6e22e",
+    "comment": "#75715e", "fg": "#f8f8f2"
+  },
+  "colors": {
+    "accent": "red", "border": "gutter", "borderAccent": "red", "borderMuted": "gutter",
+    "success": "green", "error": "red", "warning": "orange", "muted": "comment", "dim": "gutter",
+    "text": "", "thinkingText": "comment",
+    "selectedBg": "#3e3d32", "userMessageBg": "#3e3d32", "userMessageText": "",
+    "customMessageBg": "#3e3d32", "customMessageText": "", "customMessageLabel": "red",
+    "toolPendingBg": "#272822", "toolSuccessBg": "#1e2e1e", "toolErrorBg": "#2e1e1e",
+    "toolTitle": "red", "toolOutput": "",
+    "mdHeading": "orange", "mdLink": "blue", "mdLinkUrl": "comment", "mdCode": "green",
+    "mdCodeBlock": "", "mdCodeBlockBorder": "gutter", "mdQuote": "comment",
+    "mdQuoteBorder": "gutter", "mdHr": "gutter", "mdListBullet": "red",
+    "toolDiffAdded": "green", "toolDiffRemoved": "red", "toolDiffContext": "comment",
+    "syntaxComment": "comment", "syntaxKeyword": "red", "syntaxFunction": "green",
+    "syntaxVariable": "blue", "syntaxString": "yellow", "syntaxNumber": "magenta",
+    "syntaxType": "blue", "syntaxOperator": "red", "syntaxPunctuation": "comment",
+    "thinkingOff": "gutter", "thinkingMinimal": "comment", "thinkingLow": "blue",
+    "thinkingMedium": "green", "thinkingHigh": "red", "thinkingXhigh": "magenta",
+    "bashMode": "orange"
+  }
+}
