@@ -1,7 +1,7 @@
 import { truncateToWidth } from '@mariozechner/pi-tui';
 import {
-  GREEN_DARK_FG,
-  GREEN_FG,
+  labelBright,
+  labelDim,
   clamp,
   formatCompactTokens,
   tint,
@@ -76,13 +76,13 @@ export function buildInfoPanel(snapshot: InfoSnapshot, maxInner: number): BuiltP
   const rows: InfoRow[] = [
     {
       label: 'context',
-      labelColor: GREEN_FG,
+      labelColor: labelBright(),
       measure: 20 + 1 + `${Math.round(snapshot.percent ?? 0)}%`.length,
       renderValue: (valueWidth) => renderBar(snapshot.percent, valueWidth),
     },
     {
       label: 'tokens',
-      labelColor: GREEN_DARK_FG,
+      labelColor: labelDim(),
       measure: tokensIOText.length,
       renderValue: (valueWidth) => truncateToWidth(tokensIOText, valueWidth, '…', true),
     },
@@ -91,7 +91,7 @@ export function buildInfoPanel(snapshot: InfoSnapshot, maxInner: number): BuiltP
   if (cacheText) {
     rows.push({
       label: 'cache',
-      labelColor: GREEN_DARK_FG,
+      labelColor: labelDim(),
       measure: cacheText.length,
       renderValue: (valueWidth) => truncateToWidth(cacheText, valueWidth, '…', true),
     });
@@ -100,13 +100,13 @@ export function buildInfoPanel(snapshot: InfoSnapshot, maxInner: number): BuiltP
   rows.push(
     {
       label: 'cost',
-      labelColor: GREEN_DARK_FG,
+      labelColor: labelDim(),
       measure: costText.length,
       renderValue: (valueWidth) => truncateToWidth(costText, valueWidth, '…', true),
     },
     {
       label: 'model',
-      labelColor: GREEN_DARK_FG,
+      labelColor: labelDim(),
       measure: snapshot.modelText.length,
       renderValue: (valueWidth) => truncateToWidth(snapshot.modelText, valueWidth, '…', true),
     },

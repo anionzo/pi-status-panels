@@ -1,4 +1,4 @@
-import { GREEN_DARK_FG, GREEN_FG } from './utils';
+import { labelBright, labelDim } from './utils';
 import { truncateToWidth } from '@mariozechner/pi-tui';
 import {
   computePanelWidths,
@@ -43,13 +43,13 @@ export function buildGitPanel(snapshot: GitInfo, maxInner: number): BuiltPanel {
 
   const rows: GitRow[] = shouldShowTracking
     ? [
-        { label: 'worktree', value: worktreeValue, labelColor: GREEN_FG },
-        { label: 'branch', value: branchValue, labelColor: GREEN_DARK_FG },
-        { label: 'tracking', value: trackingValue, labelColor: GREEN_DARK_FG },
+        { label: 'worktree', value: worktreeValue, labelColor: labelBright() },
+        { label: 'branch', value: branchValue, labelColor: labelDim() },
+        { label: 'tracking', value: trackingValue, labelColor: labelDim() },
       ]
     : [
-        { label: 'worktree', value: worktreeValue, labelColor: GREEN_FG },
-        { label: 'branch', value: branchValue, labelColor: GREEN_DARK_FG },
+        { label: 'worktree', value: worktreeValue, labelColor: labelBright() },
+        { label: 'branch', value: branchValue, labelColor: labelDim() },
       ];
 
   const labelWidth = rows.reduce((max, row) => Math.max(max, row.label.length), 0);

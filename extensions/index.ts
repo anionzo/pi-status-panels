@@ -14,7 +14,7 @@ import { buildGitPanel, EMPTY_GIT_STATE, type GitInfo } from './git';
 import { buildInfoPanel, type InfoSnapshot } from './info';
 import { buildSessionPanel, type SessionSnapshot } from './session';
 import { framePanelBody } from './panel';
-import { maxVisibleWidth, padVisible, visibleWidth, setBorderColor, BORDER_COLOR_NAMES, type BorderColorName } from './utils';
+import { maxVisibleWidth, padVisible, visibleWidth, setBorderColor, setTextColor, COLOR_NAMES, type ColorName } from './utils';
 
 const SETTINGS_OVERLAY_MAX_INNER = 56;
 
@@ -62,7 +62,8 @@ type PanelState = Record<PanelId, boolean>;
 type StatusPanelsConfig = {
   enabled: boolean;
   panels: PanelState;
-  borderColor: BorderColorName;
+  borderColor: ColorName;
+  textColor: ColorName;
 };
 
 function createPanelState(enabled: boolean): PanelState {
@@ -77,6 +78,7 @@ function createDefaultConfig(): StatusPanelsConfig {
     enabled: true,
     panels: createPanelState(true),
     borderColor: 'blue',
+    textColor: 'green',
   };
 }
 
@@ -86,7 +88,7 @@ function normalizeConfig(raw: unknown): StatusPanelsConfig {
     return defaults;
   }
 
-  const input = raw as { enabled?: unknown; panels?: Record<string, unknown>; borderColor?: unknown };
+  const input = raw as { enabled?: unknown; panels?: Record<string, unknown>; borderColor?: unknown; textColor?: unknown };
   const panels = { ...defaults.panels };
 
   for (const panel of PANEL_DEFS) {
@@ -96,14 +98,19 @@ function normalizeConfig(raw: unknown): StatusPanelsConfig {
     }
   }
 
-  const borderColor = typeof input.borderColor === 'string' && BORDER_COLOR_NAMES.includes(input.borderColor as BorderColorName)
-    ? (input.borderColor as BorderColorName)
+  const borderColor = typeof input.borderColor === 'string' && COLOR_NAMES.includes(input.borderColor as ColorName)
+    ? (input.borderColor as ColorName)
     : defaults.borderColor;
+
+  const textColor = typeof input.textColor === 'string' && COLOR_NAMES.includes(input.textColor as ColorName)
+    ? (input.textColor as ColorName)
+    : defaults.textColor;
 
   return {
     enabled: typeof input.enabled === 'boolean' ? input.enabled : defaults.enabled,
     panels,
     borderColor,
+    textColor,
   };
 }
 
@@ -198,6 +205,7 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
   function applyConfig(ctx?: ExtensionContext) {
     if (ctx) ctxRef = ctx;
     setBorderColor(config.borderColor);
+    setTextColor(config.textColor);
 
     if (!config.enabled) {
       stop();
@@ -213,6 +221,7 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
       enabled: nextEnabled,
       panels: createPanelState(nextEnabled),
       borderColor: config.borderColor,
+      textColor: config.textColor,
     };
     persistConfig(ctx);
     applyConfig(ctx);
@@ -230,12 +239,22 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     applyConfig(ctx);
   }
 
-  function setBorderColorConfig(color: BorderColorName, ctx?: ExtensionContext) {
+  function setBorderColorConfig(color: ColorName, ctx?: ExtensionContext) {
     config = {
       ...config,
       borderColor: color,
     };
     setBorderColor(color);
+    persistConfig(ctx);
+    renderPanels();
+  }
+
+  function setTextColorConfig(color: ColorName, ctx?: ExtensionContext) {
+    config = {
+      ...config,
+      textColor: color,
+    };
+    setTextColor(color);
     persistConfig(ctx);
     renderPanels();
   }
@@ -495,7 +514,13 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
         id: 'borderColor',
         label: 'Border color',
         currentValue: config.borderColor,
-        values: [...BORDER_COLOR_NAMES],
+        values: [...COLOR_NAMES],
+      },
+      {
+        id: 'textColor',
+        label: 'Text color',
+        currentValue: config.textColor,
+        values: [...COLOR_NAMES],
       },
     ];
 
@@ -521,7 +546,12 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
           settingsTheme,
           (id, newValue) => {
             if (id === 'borderColor') {
-              setBorderColorConfig(newValue as BorderColorName, ctx);
+              setBorderColorConfig(newValue as ColorName, ctx);
+              return;
+            }
+
+            if (id === 'textColor') {
+              setTextColorConfig(newValue as ColorName, ctx);
               return;
             }
 

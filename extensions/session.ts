@@ -1,5 +1,5 @@
 import { truncateToWidth } from '@mariozechner/pi-tui';
-import { GREEN_DARK_FG, GREEN_FG } from './utils';
+import { labelBright, labelDim } from './utils';
 import {
   computePanelWidths,
   framePanelBody,
@@ -44,9 +44,9 @@ export function buildSessionPanel(snapshot: SessionSnapshot, maxInner: number): 
   const turnText = `${snapshot.turnCount}`;
 
   const rows: SessionRow[] = [
-    { label: 'elapsed', value: elapsedText, labelColor: GREEN_FG },
-    { label: 'started', value: startText, labelColor: GREEN_DARK_FG },
-    { label: 'turns', value: turnText, labelColor: GREEN_DARK_FG },
+    { label: 'elapsed', value: elapsedText, labelColor: labelBright() },
+    { label: 'started', value: startText, labelColor: labelDim() },
+    { label: 'turns', value: turnText, labelColor: labelDim() },
   ];
 
   const labelWidth = rows.reduce((max, row) => Math.max(max, row.label.length), 0);
