@@ -292,6 +292,7 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     ]);
 
     if (!upstream) {
+      const diffStats = await parseDiffStats();
       return {
         inRepo: true,
         worktree,
@@ -299,11 +300,13 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
         tracking: '(no upstream)',
         ahead: 0,
         behind: 0,
+        ...diffStats,
       };
     }
 
     const countsRaw = await runGit(['rev-list', '--left-right', '--count', `${upstream}...HEAD`]);
     const { behind, ahead } = parseCount(countsRaw || '0 0');
+    const diffStats = await parseDiffStats();
 
     return {
       inRepo: true,
@@ -312,6 +315,19 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
       tracking: upstream,
       ahead,
       behind,
+      ...diffStats,
+    };
+  }
+
+  async function parseDiffStats(): Promise<{ insertions: number; deletions: number }> {
+    const raw = await runGit(['diff', '--shortstat']);
+    if (!raw) return { insertions: 0, deletions: 0 };
+
+    const insMatch = raw.match(/(\d+) insertion/);
+    const delMatch = raw.match(/(\d+) deletion/);
+    return {
+      insertions: insMatch ? Number.parseInt(insMatch[1], 10) : 0,
+      deletions: delMatch ? Number.parseInt(delMatch[1], 10) : 0,
     };
   }
 

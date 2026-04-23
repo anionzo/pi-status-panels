@@ -15,6 +15,8 @@ export type GitInfo = {
   tracking: string;
   ahead: number;
   behind: number;
+  insertions: number;
+  deletions: number;
 };
 
 export const EMPTY_GIT_STATE: GitInfo = {
@@ -24,6 +26,8 @@ export const EMPTY_GIT_STATE: GitInfo = {
   tracking: '(no repository)',
   ahead: 0,
   behind: 0,
+  insertions: 0,
+  deletions: 0,
 };
 
 type GitRow = {
@@ -54,7 +58,9 @@ export function buildGitPanel(snapshot: GitInfo, maxInner: number): BuiltPanel {
 
   const labelWidth = rows.reduce((max, row) => Math.max(max, row.label.length), 0);
 
-  const right = `↑${snapshot.ahead} ↓${snapshot.behind}`;
+  const right = snapshot.inRepo
+    ? `+${snapshot.insertions} -${snapshot.deletions} │ ↑${snapshot.ahead} ↓${snapshot.behind}`
+    : '';
 
   const naturalContentWidth = rows.reduce(
     (max, row) => Math.max(max, labelWidth + SEPARATOR_WIDTH + row.value.length),
