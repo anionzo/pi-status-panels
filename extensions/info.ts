@@ -59,17 +59,15 @@ function formatCost(cost: number): string {
 }
 
 export function buildInfoPanel(snapshot: InfoSnapshot, maxInner: number): BuiltPanel {
-  // Header right: context window + %
-  const pctStr = snapshot.percent != null ? `${Math.round(snapshot.percent)}%` : '?%';
-  const contextTopRight = `${formatCompactTokens(snapshot.contextWindow)} ${pctStr}`;
+  const contextTopRight = formatCompactTokens(snapshot.contextWindow);
 
-  // Tokens line: ↓input ↑output • cache 45k • $0.15
+  // Tokens line: ↓input ↑output • $0.15
   const inputText = formatCompactTokens(snapshot.inputTokens);
   const outputText = formatCompactTokens(snapshot.outputTokens);
   const parts: string[] = [`↓${inputText} ↑${outputText}`];
 
   if (snapshot.cacheRead > 0) {
-    parts.push(`cache ${formatCompactTokens(snapshot.cacheRead)}`);
+    parts.push(formatCompactTokens(snapshot.cacheRead));
   }
 
   parts.push(formatCost(snapshot.totalCost));
