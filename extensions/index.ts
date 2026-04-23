@@ -173,6 +173,7 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     tokens: null,
     contextWindow: 0,
     modelText: '(no model)',
+    modelLabel: 'model',
     inputTokens: 0,
     outputTokens: 0,
     cacheRead: 0,
@@ -317,11 +318,12 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
   function readInfoState(ctx: ExtensionContext): InfoSnapshot {
     const usage = ctx.getContextUsage();
 
-    const provider = ctx.model?.provider || '';
+    const provider = ctx.model?.provider || 'model';
     const modelName = ctx.model?.name || ctx.model?.id || '(no model)';
     const thinking = pi.getThinkingLevel();
 
-    const modelLabel = provider ? `${provider}/${modelName}` : modelName;
+    const modelLabel = provider;
+    const modelValue = `${modelName} • ${thinking}`;
 
     // Aggregate token stats from session entries
     let inputTokens = 0;
@@ -352,7 +354,8 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
       percent: usage?.percent ?? null,
       tokens: usage?.tokens ?? null,
       contextWindow: usage?.contextWindow ?? 0,
-      modelText: `${modelLabel} • ${thinking}`,
+      modelText: modelValue,
+      modelLabel,
       inputTokens,
       outputTokens,
       cacheRead,

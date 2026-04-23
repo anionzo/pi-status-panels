@@ -21,6 +21,7 @@ export type InfoSnapshot = {
   tokens: number | null;
   contextWindow: number;
   modelText: string;
+  modelLabel: string;
   inputTokens: number;
   outputTokens: number;
   cacheRead: number;
@@ -89,7 +90,7 @@ export function buildInfoPanel(snapshot: InfoSnapshot, maxInner: number): BuiltP
       renderValue: (valueWidth) => truncateToWidth(tokensLine, valueWidth, '…', true),
     },
     {
-      label: 'model',
+      label: snapshot.modelLabel,
       labelColor: labelDim(),
       measure: snapshot.modelText.length,
       renderValue: (valueWidth) => truncateToWidth(snapshot.modelText, valueWidth, '…', true),
