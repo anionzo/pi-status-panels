@@ -17,6 +17,12 @@ export type GitInfo = {
   behind: number;
   insertions: number;
   deletions: number;
+  stagedInsertions: number;
+  stagedDeletions: number;
+  filesChanged: number;
+  stagedFiles: number;
+  untrackedCount: number;
+  stashCount: number;
 };
 
 export const EMPTY_GIT_STATE: GitInfo = {
@@ -28,6 +34,12 @@ export const EMPTY_GIT_STATE: GitInfo = {
   behind: 0,
   insertions: 0,
   deletions: 0,
+  stagedInsertions: 0,
+  stagedDeletions: 0,
+  filesChanged: 0,
+  stagedFiles: 0,
+  untrackedCount: 0,
+  stashCount: 0,
 };
 
 type GitRow = {
@@ -35,6 +47,23 @@ type GitRow = {
   value: string;
   labelColor?: string;
 };
+
+function buildChangesValue(snapshot: GitInfo): string {
+  const parts: string[] = [];
+
+  // Staged changes
+  if (snapshot.stagedFiles > 0) {
+    parts.push(`staged: ${snapshot.stagedFiles} file${snapshot.stagedFiles > 1 ? 's' : ''} (+${snapshot.stagedInsertions} -${snapshot.stagedDeletions})`);
+  }
+
+  // Unstaged changes
+  if (snapshot.filesChanged > 0) {
+    parts.push(`unstaged: ${snapshot.filesChanged} file${snapshot.filesChanged > 1 ? 's' : ''} (+${snapshot.insertions} -${snapshot.deletions})`);
+  }
+
+  if (parts.length === 0) return 'clean';
+  return parts.join(' • ');
+}
 
 export function buildGitPanel(snapshot: GitInfo, maxInner: number): BuiltPanel {
   const worktreeValue = snapshot.inRepo ? snapshot.worktree : '(not a git repository)';
@@ -45,21 +74,31 @@ export function buildGitPanel(snapshot: GitInfo, maxInner: number): BuiltPanel {
   const shouldShowTracking =
     snapshot.inRepo && (trackingValue === '(no upstream)' || trackingValue !== expectedTracking);
 
-  const rows: GitRow[] = shouldShowTracking
-    ? [
-        { label: 'worktree', value: worktreeValue, labelColor: labelBright() },
-        { label: 'branch', value: branchValue, labelColor: labelDim() },
-        { label: 'tracking', value: trackingValue, labelColor: labelDim() },
-      ]
-    : [
-        { label: 'worktree', value: worktreeValue, labelColor: labelBright() },
-        { label: 'branch', value: branchValue, labelColor: labelDim() },
-      ];
+  const rows: GitRow[] = [
+    { label: 'worktree', value: worktreeValue, labelColor: labelBright() },
+    { label: 'branch', value: branchValue, labelColor: labelDim() },
+  ];
+
+  if (shouldShowTracking) {
+    rows.push({ label: 'tracking', value: trackingValue, labelColor: labelDim() });
+  }
+
+  if (snapshot.inRepo) {
+    rows.push({ label: 'changes', value: buildChangesValue(snapshot), labelColor: labelDim() });
+
+    // Show untracked & stash only when non-zero
+    const extras: string[] = [];
+    if (snapshot.untrackedCount > 0) extras.push(`${snapshot.untrackedCount} untracked`);
+    if (snapshot.stashCount > 0) extras.push(`${snapshot.stashCount} stash${snapshot.stashCount > 1 ? 'es' : ''}`);
+    if (extras.length > 0) {
+      rows.push({ label: 'other', value: extras.join(' • '), labelColor: labelDim() });
+    }
+  }
 
   const labelWidth = rows.reduce((max, row) => Math.max(max, row.label.length), 0);
 
   const right = snapshot.inRepo
-    ? `+${snapshot.insertions} -${snapshot.deletions} │ ↑${snapshot.ahead} ↓${snapshot.behind}`
+    ? `↑${snapshot.ahead} ↓${snapshot.behind}`
     : '';
 
   const naturalContentWidth = rows.reduce(

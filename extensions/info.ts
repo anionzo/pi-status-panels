@@ -24,8 +24,10 @@ export type InfoSnapshot = {
   modelLabel: string;
   inputTokens: number;
   outputTokens: number;
+  thinkingTokens: number;
   cacheRead: number;
   totalCost: number;
+  turnCount: number;
 };
 
 type InfoRow = {
@@ -62,16 +64,24 @@ function formatCost(cost: number): string {
 export function buildInfoPanel(snapshot: InfoSnapshot, maxInner: number): BuiltPanel {
   const contextTopRight = formatCompactTokens(snapshot.contextWindow);
 
-  // Tokens line: ↓input ↑output • $0.15
+  // Tokens line: ↓input ↑output (🧠thinking) • $0.15
   const inputText = formatCompactTokens(snapshot.inputTokens);
   const outputText = formatCompactTokens(snapshot.outputTokens);
   const parts: string[] = [`↓${inputText} ↑${outputText}`];
+
+  if (snapshot.thinkingTokens > 0) {
+    parts[0] += ` 💭${formatCompactTokens(snapshot.thinkingTokens)}`;
+  }
 
   if (snapshot.cacheRead > 0) {
     parts.push(formatCompactTokens(snapshot.cacheRead));
   }
 
-  parts.push(formatCost(snapshot.totalCost));
+  const costText = formatCost(snapshot.totalCost);
+  const costPerTurn = snapshot.turnCount > 0
+    ? `${costText} (${formatCost(snapshot.totalCost / snapshot.turnCount)}/turn)`
+    : costText;
+  parts.push(costPerTurn);
 
   const tokensLine = parts.join(' • ');
 

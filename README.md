@@ -9,11 +9,13 @@ Responsive status panels rendered below the editor in [pi](https://pi.dev).
 ### GIT
 - Worktree name, branch, upstream tracking (shown only when non-default)
 - Ahead/behind counts (`↑0 ↓0`)
-- Insertions/deletions from unstaged changes (`+15 -3`)
+- Staged changes: file count, insertions/deletions (`staged: 2 files (+10 -3)`)
+- Unstaged changes: file count, insertions/deletions (`unstaged: 3 files (+15 -7)`)
+- Untracked file count & stash count (shown only when > 0)
 
 ### INFO
 - Context usage bar (color-coded green → red)
-- Token breakdown: `↓input ↑output • cache • $cost`
+- Token breakdown: `↓input ↑output 💭thinking • cache • $cost ($cost/turn)`
 - Provider & model: `anthropic │ Claude Sonnet 4 • high`
 
 ### SESSION

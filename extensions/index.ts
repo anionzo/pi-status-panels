@@ -292,7 +292,10 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     ]);
 
     if (!upstream) {
-      const diffStats = await parseDiffStats();
+      const unstagedStats = await parseDiffStats([]);
+      const stagedStats = await parseDiffStats(['--cached']);
+      const untrackedCount = await countUntracked();
+      const stashCount = await countStash();
       return {
         inRepo: true,
         worktree,
@@ -300,13 +303,23 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
         tracking: '(no upstream)',
         ahead: 0,
         behind: 0,
-        ...diffStats,
+        insertions: unstagedStats.insertions,
+        deletions: unstagedStats.deletions,
+        filesChanged: unstagedStats.files,
+        stagedInsertions: stagedStats.insertions,
+        stagedDeletions: stagedStats.deletions,
+        stagedFiles: stagedStats.files,
+        untrackedCount,
+        stashCount,
       };
     }
 
     const countsRaw = await runGit(['rev-list', '--left-right', '--count', `${upstream}...HEAD`]);
     const { behind, ahead } = parseCount(countsRaw || '0 0');
-    const diffStats = await parseDiffStats();
+    const unstagedStats = await parseDiffStats([]);
+    const stagedStats = await parseDiffStats(['--cached']);
+    const untrackedCount = await countUntracked();
+    const stashCount = await countStash();
 
     return {
       inRepo: true,
@@ -315,20 +328,41 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
       tracking: upstream,
       ahead,
       behind,
-      ...diffStats,
+      insertions: unstagedStats.insertions,
+      deletions: unstagedStats.deletions,
+      filesChanged: unstagedStats.files,
+      stagedInsertions: stagedStats.insertions,
+      stagedDeletions: stagedStats.deletions,
+      stagedFiles: stagedStats.files,
+      untrackedCount,
+      stashCount,
     };
   }
 
-  async function parseDiffStats(): Promise<{ insertions: number; deletions: number }> {
-    const raw = await runGit(['diff', 'HEAD', '--shortstat']);
-    if (!raw) return { insertions: 0, deletions: 0 };
+  async function parseDiffStats(extra: string[] = []): Promise<{ insertions: number; deletions: number; files: number }> {
+    const raw = await runGit(['diff', ...extra, '--shortstat']);
+    if (!raw) return { insertions: 0, deletions: 0, files: 0 };
 
+    const filesMatch = raw.match(/(\d+) file/);
     const insMatch = raw.match(/(\d+) insertion/);
     const delMatch = raw.match(/(\d+) deletion/);
     return {
       insertions: insMatch ? Number.parseInt(insMatch[1], 10) : 0,
       deletions: delMatch ? Number.parseInt(delMatch[1], 10) : 0,
+      files: filesMatch ? Number.parseInt(filesMatch[1], 10) : 0,
     };
+  }
+
+  async function countUntracked(): Promise<number> {
+    const raw = await runGit(['ls-files', '--others', '--exclude-standard']);
+    if (!raw) return 0;
+    return raw.split('\n').filter(Boolean).length;
+  }
+
+  async function countStash(): Promise<number> {
+    const raw = await runGit(['stash', 'list']);
+    if (!raw) return 0;
+    return raw.split('\n').filter(Boolean).length;
   }
 
   function readInfoState(ctx: ExtensionContext): InfoSnapshot {
@@ -344,6 +378,7 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     // Aggregate token stats from session entries
     let inputTokens = 0;
     let outputTokens = 0;
+    let thinkingTokens = 0;
     let cacheRead = 0;
     let totalCost = 0;
 
@@ -355,6 +390,7 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
           if (msg.usage) {
             inputTokens += msg.usage.input || 0;
             outputTokens += msg.usage.output || 0;
+            thinkingTokens += msg.usage.thinking || 0;
             cacheRead += msg.usage.cacheRead || 0;
             if (msg.usage.cost) {
               totalCost += msg.usage.cost.total || 0;
@@ -374,8 +410,10 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
       modelLabel,
       inputTokens,
       outputTokens,
+      thinkingTokens,
       cacheRead,
       totalCost,
+      turnCount: sessionState.turnCount,
     };
   }
 
