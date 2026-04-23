@@ -12,6 +12,9 @@ export type SessionSnapshot = {
   startedAt: number;
   elapsed: number;
   turnCount: number;
+
+  avgTurnDuration: number;
+  tokensPerSec: number;
 };
 
 function formatElapsed(ms: number): string {
@@ -38,6 +41,15 @@ type SessionRow = {
   labelColor?: string;
 };
 
+function formatDuration(ms: number): string {
+  if (ms <= 0) return '-';
+  const sec = ms / 1000;
+  if (sec < 60) return `${sec.toFixed(1)}s`;
+  const m = Math.floor(sec / 60);
+  const s = Math.round(sec % 60);
+  return `${m}m ${s}s`;
+}
+
 export function buildSessionPanel(snapshot: SessionSnapshot, maxInner: number): BuiltPanel {
   const elapsedText = formatElapsed(snapshot.elapsed);
   const startText = formatStartTime(snapshot.startedAt);
@@ -48,6 +60,14 @@ export function buildSessionPanel(snapshot: SessionSnapshot, maxInner: number): 
     { label: 'started', value: startText, labelColor: labelDim() },
     { label: 'turns', value: turnText, labelColor: labelDim() },
   ];
+
+  if (snapshot.turnCount > 0 && snapshot.avgTurnDuration > 0) {
+    rows.push({ label: 'avg turn', value: formatDuration(snapshot.avgTurnDuration), labelColor: labelDim() });
+  }
+
+  if (snapshot.tokensPerSec > 0) {
+    rows.push({ label: 'speed', value: `${snapshot.tokensPerSec.toFixed(1)} tok/s`, labelColor: labelDim() });
+  }
 
   const labelWidth = rows.reduce((max, row) => Math.max(max, row.label.length), 0);
 

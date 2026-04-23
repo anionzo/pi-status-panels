@@ -13,6 +13,7 @@ import {
 import { buildGitPanel, EMPTY_GIT_STATE, type GitInfo } from './git';
 import { buildInfoPanel, type InfoSnapshot } from './info';
 import { buildSessionPanel, type SessionSnapshot } from './session';
+import { buildSystemPanel, type SystemSnapshot, readSystemStats } from './system';
 import { framePanelBody } from './panel';
 import { maxVisibleWidth, padVisible, visibleWidth, setBorderColor, setTextColor, COLOR_NAMES, type ColorName } from './utils';
 
@@ -54,6 +55,7 @@ const PANEL_DEFS = [
   { id: 'git', label: 'Git', defaultEnabled: true },
   { id: 'info', label: 'Info', defaultEnabled: true },
   { id: 'session', label: 'Session', defaultEnabled: true },
+  { id: 'system', label: 'System', defaultEnabled: true },
 ] as const;
 
 type PanelId = (typeof PANEL_DEFS)[number]['id'];
@@ -166,7 +168,28 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
   let config = loadConfig();
   let lastGitRefreshAt = 0;
 
+  // Turn timing
+  let turnStartAt = 0;
+  let turnDurations: number[] = [];
+  let lastTurnOutputTokens = 0;
+  let tokensPerSec = 0;
+
+  // Context warning (only notify once per threshold)
+  let warnedAt80 = false;
+  let warnedAt90 = false;
+
   let gitState: GitInfo = EMPTY_GIT_STATE;
+
+  let systemState: SystemSnapshot = {
+    cpuPercent: 0,
+    ramUsedGB: 0,
+    ramTotalGB: 0,
+    ramPercent: 0,
+    gpuName: null,
+    gpuPercent: null,
+    gpuMemUsedMB: null,
+    gpuMemTotalMB: null,
+  };
 
   let infoState: InfoSnapshot = {
     percent: null,
@@ -176,14 +199,18 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     modelLabel: 'model',
     inputTokens: 0,
     outputTokens: 0,
+    thinkingTokens: 0,
     cacheRead: 0,
     totalCost: 0,
+    turnCount: 0,
   };
 
   let sessionState: SessionSnapshot = {
     startedAt: Date.now(),
     elapsed: 0,
     turnCount: 0,
+    avgTurnDuration: 0,
+    tokensPerSec: 0,
   };
 
   function isPanelEnabled(panelId: PanelId): boolean {
@@ -418,9 +445,15 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
   }
 
   function updateSessionElapsed() {
+    const avgTurnDuration = turnDurations.length > 0
+      ? turnDurations.reduce((a, b) => a + b, 0) / turnDurations.length
+      : 0;
+
     sessionState = {
       ...sessionState,
       elapsed: Date.now() - sessionState.startedAt,
+      avgTurnDuration,
+      tokensPerSec,
     };
   }
 
@@ -461,38 +494,49 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
     }
 
     // Build session panel
-    if (!isPanelEnabled('session')) {
+    if (!isPanelEnabled('session') && !isPanelEnabled('system')) {
       return topBlock;
     }
 
-    const sessionPanel = buildSessionPanel(sessionState, safeWidth - 2);
+    // Build bottom-right panels (session + system)
+    const bottomPanels: Array<{ lines: string[]; width: number }> = [];
+
+    if (isPanelEnabled('session')) {
+      bottomPanels.push(buildSessionPanel(sessionState, safeWidth - 2));
+    }
+
+    if (isPanelEnabled('system')) {
+      bottomPanels.push(buildSystemPanel(systemState, safeWidth - 2));
+    }
+
+    let bottomBlock: string[] = [];
+    if (bottomPanels.length === 1) {
+      bottomBlock = bottomPanels[0]!.lines;
+    } else if (bottomPanels.length === 2) {
+      const [first, second] = bottomPanels;
+      const combined = first!.width + visibleWidth(GAP) + second!.width;
+      if (combined <= safeWidth) {
+        bottomBlock = combineSideBySide(first!.lines, first!.width, second!.lines);
+      } else {
+        bottomBlock = [...first!.lines, ...second!.lines];
+      }
+    }
 
     if (topBlock.length === 0) {
-      return sessionPanel.lines;
+      return bottomBlock;
     }
 
     const topWidth = maxVisibleWidth(topBlock);
     const gapWidth = visibleWidth(GAP);
+    const bottomWidth = maxVisibleWidth(bottomBlock);
 
     // Try side by side with top block
-    if (topWidth + gapWidth + sessionPanel.width <= safeWidth) {
-      return combineSideBySide(topBlock, topWidth, sessionPanel.lines);
-    }
-
-    // Try compact session
-    const availableForSession = safeWidth - topWidth - gapWidth;
-    if (availableForSession >= 26) {
-      const sessionCompact = buildSessionPanel(
-        sessionState,
-        Math.max(22, availableForSession - 2),
-      );
-      if (topWidth + gapWidth + sessionCompact.width <= safeWidth) {
-        return combineSideBySide(topBlock, topWidth, sessionCompact.lines);
-      }
+    if (topWidth + gapWidth + bottomWidth <= safeWidth) {
+      return combineSideBySide(topBlock, topWidth, bottomBlock);
     }
 
     // Stack vertically
-    return [...topBlock, ...sessionPanel.lines];
+    return [...topBlock, ...bottomBlock];
   }
 
   function renderPanels() {
@@ -518,7 +562,24 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
 
     gitState = await readGitInfo();
     infoState = readInfoState(ctxRef);
+    systemState = await readSystemStats(pi);
     lastGitRefreshAt = now;
+
+    // Context usage warnings
+    checkContextWarning(ctxRef);
+  }
+
+  function checkContextWarning(ctx: ExtensionContext) {
+    const percent = infoState.percent;
+    if (percent == null || !ctx.hasUI) return;
+
+    if (percent >= 90 && !warnedAt90) {
+      warnedAt90 = true;
+      ctx.ui.notify(`⚠️ Context usage at ${Math.round(percent)}% — compaction imminent!`, 'error');
+    } else if (percent >= 80 && !warnedAt80) {
+      warnedAt80 = true;
+      ctx.ui.notify(`⚠️ Context usage at ${Math.round(percent)}% — consider compacting`, 'warning');
+    }
   }
 
   async function tick(forceCore = false) {
@@ -703,18 +764,51 @@ export default function statusPanelsExtension(pi: ExtensionAPI) {
 
   pi.on('session_start', async (_event, ctx) => {
     config = loadConfig();
-    sessionState = { startedAt: Date.now(), elapsed: 0, turnCount: 0 };
+    sessionState = { startedAt: Date.now(), elapsed: 0, turnCount: 0, avgTurnDuration: 0, tokensPerSec: 0 };
+    turnDurations = [];
+    tokensPerSec = 0;
+    lastTurnOutputTokens = 0;
+    warnedAt80 = false;
+    warnedAt90 = false;
     applyConfig(ctx);
   });
 
   pi.on('session_switch', async (_event, ctx) => {
     config = loadConfig();
-    sessionState = { startedAt: Date.now(), elapsed: 0, turnCount: 0 };
+    sessionState = { startedAt: Date.now(), elapsed: 0, turnCount: 0, avgTurnDuration: 0, tokensPerSec: 0 };
+    turnDurations = [];
+    tokensPerSec = 0;
+    lastTurnOutputTokens = 0;
+    warnedAt80 = false;
+    warnedAt90 = false;
     applyConfig(ctx);
+  });
+
+  pi.on('turn_start', async (_event, _ctx) => {
+    turnStartAt = Date.now();
+    // Snapshot current output tokens so we can diff at turn_end
+    lastTurnOutputTokens = infoState.outputTokens;
   });
 
   pi.on('turn_end', async (_event, ctx) => {
     ctxRef = ctx;
+
+    // Calculate turn duration
+    if (turnStartAt > 0) {
+      const duration = Date.now() - turnStartAt;
+      if (duration > 0) {
+        turnDurations.push(duration);
+
+        // Calculate tokens/sec from this turn
+        const newInfo = readInfoState(ctx);
+        const turnOutputTokens = newInfo.outputTokens - lastTurnOutputTokens;
+        if (turnOutputTokens > 0 && duration > 0) {
+          tokensPerSec = (turnOutputTokens / duration) * 1000;
+        }
+      }
+      turnStartAt = 0;
+    }
+
     sessionState = {
       ...sessionState,
       turnCount: sessionState.turnCount + 1,

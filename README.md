@@ -22,6 +22,14 @@ Responsive status panels rendered below the editor in [pi](https://pi.dev).
 - Elapsed time since session start
 - Session start time
 - Turn count
+- Average turn duration (shown after first turn)
+- Output speed in tok/s (shown after first turn)
+
+### SYSTEM
+- CPU usage bar (color-coded)
+- RAM usage bar with used/total GB
+- GPU utilization (NVIDIA only, auto-detected via `nvidia-smi`)
+- VRAM usage (shown only when GPU detected)
 
 Panels auto-size to their content, render side-by-side when terminal width allows, and fall back to a stacked layout on narrow terminals.
 
@@ -49,7 +57,7 @@ pi install /path/to/pi-status-panels
 Run `/status-panels` to open the settings overlay:
 
 - **Show all panels** — master toggle
-- **Git / Info / Session** — toggle individual panels
+- **Git / Info / Session / System** — toggle individual panels
 - **Border color** — panel frame color (blue, gold, green, cyan, magenta, red, white)
 - **Text color** — label text color with bright/dim pair (blue, gold, green, cyan, magenta, red, white)
 
@@ -59,7 +67,9 @@ Preferences are persisted at `~/.pi/agent/state/extensions/status-panels/config.
 
 - Git info & diff stats refresh every 5 seconds and immediately after each agent turn
 - LLM context, tokens, and model info update on turn end and model switch
+- System stats (CPU, RAM, GPU) refresh every 5 seconds
 - Session timer ticks every 1 second
+- Context warning notifies at 80% (warning) and 90% (critical)
 
 ## Customization
 

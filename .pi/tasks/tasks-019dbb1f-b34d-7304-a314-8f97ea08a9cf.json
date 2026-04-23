@@ -1,63 +1,41 @@
 {
-  "nextId": 5,
+  "nextId": 8,
   "tasks": [
     {
-      "id": "1",
-      "subject": "Fix package.json description & image URL",
-      "description": "1. Remove \"Spotify now-playing\" from description\n2. Fix pi.image URL to point to anionzo/pi-status-panels repo instead of alasano/house-of-pi",
-      "status": "completed",
-      "activeForm": "Fixing package.json",
-      "metadata": {},
-      "blocks": [
-        "4"
-      ],
-      "blockedBy": [],
-      "createdAt": 1776961385544,
-      "updatedAt": 1776961464868
-    },
-    {
-      "id": "2",
-      "subject": "Add git stash, staged/unstaged, file count, untracked to Git panel",
-      "description": "Add to git.ts and index.ts:\n1. Stash count (git stash list | wc -l) — only show if > 0\n2. Staged changes vs unstaged changes (git diff --cached --shortstat for staged, git diff --shortstat for unstaged)\n3. File changed count from diff stats\n4. Untracked files count (git ls-files --others --exclude-standard | wc -l)\nUpdate GitInfo type, readGitInfo(), and buildGitPanel() accordingly.\nShow on title bar right side: e.g. \"+15 -3 │ ↑0 ↓0\" becomes more detailed with staged/unstaged/untracked info.\nKeep it clean and compact.",
-      "status": "completed",
-      "activeForm": "Enhancing Git panel",
-      "metadata": {},
-      "blocks": [
-        "4"
-      ],
-      "blockedBy": [],
-      "createdAt": 1776961394007,
-      "updatedAt": 1776961527132
-    },
-    {
-      "id": "3",
-      "subject": "Add thinking tokens breakdown and cost/turn to Info panel",
-      "description": "In info.ts and index.ts:\n1. Check if usage data includes thinking tokens and separate them from output tokens\n2. Add cost-per-turn metric (totalCost / turnCount) somewhere visible\nKeep the tokens line compact. Thinking tokens could be shown as a separate segment if available.",
-      "status": "completed",
-      "activeForm": "Enhancing Info panel",
-      "metadata": {},
-      "blocks": [
-        "4"
-      ],
-      "blockedBy": [],
-      "createdAt": 1776961400442,
-      "updatedAt": 1776961566155
-    },
-    {
-      "id": "4",
-      "subject": "Update CHANGELOG.md and bump version to 0.4.0",
-      "description": "Add version 0.4.0 entry covering:\n- Git panel: stash count, staged vs unstaged diff stats, file changed count, untracked files count\n- Info panel: thinking tokens breakdown, cost per turn\n- Fix: package.json description removed Spotify reference\n- Fix: pi.image URL corrected to own repo\n- Fix: git diff HEAD for accurate shortstat\n- Docs: README expanded with detailed panel descriptions and refresh behavior\nBump version in package.json to 0.4.0",
+      "id": "5",
+      "subject": "Add speed & turn stats to Session panel",
+      "description": "Add to Session panel:\n1. Tokens/sec — calculate output tokens per second based on turn durations\n2. Average turn duration — track each turn's duration and show avg\n\nNeed to:\n- Track turn start/end times in index.ts (turn_start / turn_end events)\n- Calculate avg turn duration and tokens/sec\n- Pass these to SessionSnapshot\n- Display in session.ts panel",
       "status": "in_progress",
-      "activeForm": "Updating CHANGELOG",
+      "activeForm": "Adding speed stats",
       "metadata": {},
       "blocks": [],
-      "blockedBy": [
-        "1",
-        "2",
-        "3"
-      ],
-      "createdAt": 1776961407503,
-      "updatedAt": 1776961638191
+      "blockedBy": [],
+      "createdAt": 1776961932435,
+      "updatedAt": 1776962601184
+    },
+    {
+      "id": "6",
+      "subject": "Add context usage warning when approaching limit",
+      "description": "Add context usage warning system:\n1. When context usage exceeds 80%, flash a notification/warning to the user\n2. Different severity levels: 80% = warning (yellow), 90% = critical (red)\n3. Only notify once per threshold crossing (don't spam)\n4. Use ctx.ui.notify() for the alert\n5. Add visual indicator in the Info panel context bar (e.g. ⚠️ prefix when high)",
+      "status": "pending",
+      "activeForm": "Adding context warning",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1776961991393,
+      "updatedAt": 1776961991393
+    },
+    {
+      "id": "7",
+      "subject": "Add SYSTEM panel with RAM, CPU, GPU stats",
+      "description": "Create new SYSTEM panel showing:\n1. RAM usage (used/total, percentage) — use Node.js os.totalmem()/os.freemem()\n2. CPU usage (percentage) — calculate from os.cpus() delta between ticks\n3. GPU usage (if nvidia-smi available) — shell out to nvidia-smi\nCreate extensions/system.ts, register in PANEL_DEFS, add to buildAllPanels layout",
+      "status": "pending",
+      "activeForm": "Adding system resource panel",
+      "metadata": {},
+      "blocks": [],
+      "blockedBy": [],
+      "createdAt": 1776962596388,
+      "updatedAt": 1776962596388
     }
   ]
 }

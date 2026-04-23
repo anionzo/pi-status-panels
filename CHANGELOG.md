@@ -2,6 +2,12 @@
 
 ## 0.4.0
 
+### New: SYSTEM panel
+- **CPU usage** bar (delta-based, accurate)
+- **RAM usage** bar with used/total GB
+- **GPU utilization** via `nvidia-smi` (auto-detected, NVIDIA only)
+- **VRAM usage** shown when GPU detected
+
 ### Git panel
 - **Staged vs unstaged** diff stats shown separately with file counts
 - **Untracked files** count (shown only when > 0)
@@ -10,7 +16,16 @@
 
 ### Info panel
 - **Thinking tokens** shown separately (`💭N`) when model uses extended thinking
-- **Cost per turn** displayed alongside total cost (`$0.42 ($0.07/turn)`)
+- Removed cost/turn display
+
+### Session panel
+- **Average turn duration** shown after first turn
+- **Output speed** (tok/s) calculated per turn
+
+### Context warning
+- **80% warning** — notification to consider compacting
+- **90% critical** — notification that compaction is imminent
+- Alerts fire once per session per threshold
 
 ### Fixes
 - `package.json` description no longer references removed Spotify panel

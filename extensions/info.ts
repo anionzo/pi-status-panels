@@ -77,11 +77,7 @@ export function buildInfoPanel(snapshot: InfoSnapshot, maxInner: number): BuiltP
     parts.push(formatCompactTokens(snapshot.cacheRead));
   }
 
-  const costText = formatCost(snapshot.totalCost);
-  const costPerTurn = snapshot.turnCount > 0
-    ? `${costText} (${formatCost(snapshot.totalCost / snapshot.turnCount)}/turn)`
-    : costText;
-  parts.push(costPerTurn);
+  parts.push(formatCost(snapshot.totalCost));
 
   const tokensLine = parts.join(' • ');
 
